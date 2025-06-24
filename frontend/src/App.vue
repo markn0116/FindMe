@@ -1,9 +1,9 @@
 <template>
   <div id="app">
-    <h1>📦 FindMe システム</h1>
+    <h1>📦 FindMe</h1>
     <nav>
       <router-link to="/">ホーム</router-link> |
-      <router-link to="/master/category">カテゴリマスタ</router-link>
+      <router-link to="/master/categories">カテゴリマスタ保守</router-link>
     </nav>
 
     <!-- 🔽 URLに対応する画面がここに表示される -->

@@ -12,6 +12,13 @@ export default defineConfig({
   },
   server: {
     port: 5173,     // ★ ここでポートを固定
-    host: true      // ★ Dockerホストからのアクセスも許可
+    host: true,     // ★ Dockerホストからのアクセスも許可
+    proxy: {
+      '/api': {
+        target: 'http://backend:8000',  // コンテナ名ベースでつなぐ
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '/api')
+      }
+    }
   }
 })
