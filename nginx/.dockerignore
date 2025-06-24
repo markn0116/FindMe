@@ -1,0 +1,14 @@
+# エディタ設定など
+.vscode/
+.idea/
+
+# OSによる不要ファイル
+.DS_Store
+Thumbs.db
+
+# Git関連
+.git
+.gitignore
+
+# ログ（手動で置かれている場合など）
+*.log

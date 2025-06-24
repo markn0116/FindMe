@@ -1,0 +1,13 @@
+services:
+  backend:
+    environment:
+      - APP_ENV=production
+    restart: always
+    container_name: findme_backend
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    restart: always
+    container_name: findme_frontend

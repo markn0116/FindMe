@@ -1,0 +1,28 @@
+# Python バイトコード・キャッシュ
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# 仮想環境（誤って置かれた場合）
+venv/
+env/
+
+# エディタ・IDE設定
+.vscode/
+.idea/
+
+# ログファイル
+*.log
+
+# テストキャッシュや一時ファイル
+*.pytest_cache
+*.coverage
+.coverage.*
+
+# .env ファイル（DBパスワードなどを含む可能性あり）
+.env
+.env.*
+
+# Alembicのキャッシュなど（※migrationsは除外しない）
+alembic/versions/__pycache__/

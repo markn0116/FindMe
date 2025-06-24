@@ -1,0 +1,14 @@
+services:
+  backend:
+    environment:
+      - APP_ENV=development
+    volumes:
+      - ./backend:/backend
+    container_name: findme_backend
+
+  frontend:
+    volumes:
+      - ./frontend:/frontend
+      - /frontend/node_modules
+    working_dir: /frontend
+    container_name: findme_frontend
