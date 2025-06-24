@@ -8,7 +8,11 @@ import CategoryMaster from '../views/CategoryMaster.vue'
 // ルーティングの定義
 const routes = [
   { path: '/', component: Home },
-  { path: '/master/category', component: CategoryMaster }
+  {
+    path: '/master/categories',
+    name: 'CategoryMaster',
+    component: CategoryMaster
+  }
 ]
 
 // ルーターインスタンスを作成
