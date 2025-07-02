@@ -56,6 +56,8 @@ class M_CATEGORIES(Base):
 
     MCTG_CODE = Column(Integer, primary_key=True)  # コード
     MCTG_NAME = Column(String(20), nullable=False)  # 名称
+    MCTG_ORDER = Column(SmallInteger, nullable=False, server_default=1)  # 表示順
+    MCTG_VALID = Column(SmallInteger, nullable=False, server_default=1)  # 有効フラグ
     MCTG_CREATED_AT = Column(DateTime, nullable=False, server_default=func.now())  # 作成日時
     MCTG_UPDATED_AT = Column(DateTime, nullable=False, server_default=func.now())  # 更新日時
 

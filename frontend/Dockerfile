@@ -10,11 +10,11 @@ RUN npm install -g create-vite
 # vue-router をプロジェクトに追加
 COPY package*.json ./
 
+# 依存関係をインストール
+RUN npm install
+
 # 残りのファイルを全部コピー
 COPY . .
-
-# ここで install（vue-router や vite も含めて）
-RUN npm install
 
 # エントリポイントスクリプトをコピー
 COPY docker-entrypoint.sh /entrypoint.sh
