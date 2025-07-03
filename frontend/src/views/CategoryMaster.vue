@@ -60,7 +60,7 @@
 
     <!-- 編集ダイアログ -->
     <el-dialog v-model="editDialogVisible" title="カテゴリ編集" width="500px">
-      <el-form :model="editForm" label-width="100px">
+      <el-form :model="editForm" :rules="rules" ref="editFormRef" label-width="100px">
         <el-form-item label="コード">
             <el-input-number v-model="editForm.MCTG_CODE" :min="1" disabled />
         </el-form-item>
