@@ -210,6 +210,8 @@ const openEditDialog = (row) => {
 // 編集ダイアログで保存
 const submitEdit = async () => {
   try {
+    await editFormRef.value.validate()
+
     const { MCTG_CODE, ...payload } = editForm.value
     await updateCategory(Number(editForm.value.MCTG_CODE), editForm.value)
     editDialogVisible.value = false
