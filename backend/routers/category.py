@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from schemas import category as schema
 from crud import category as crud
+from typing import List
 
 # カテゴリマスタのルーター設定
 router = APIRouter(
@@ -19,6 +20,11 @@ def read_categories(db: Session = Depends(get_db)):
 @router.post("/", response_model=schema.CategoryOut)
 def create_category(category: schema.CategoryCreate, db: Session = Depends(get_db)):
     return crud.create_category(db, category)
+
+# 🔁 複数一括登録：POST /categories/bulk
+@router.post("/bulk", response_model=List[schema.CategoryOut])
+def create_categories_bulk(categories: List[schema.CategoryCreate], db: Session = Depends(get_db)):
+    return crud.create_categories_bulk(db, categories)
 
 # ✏️ 更新：PUT /categories/{code}
 @router.put("/{code}", response_model=schema.CategoryOut)
