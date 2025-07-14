@@ -17,10 +17,10 @@
       class="rounded-lg shadow-md bg-white text-sm"
       style="width: 100%"
     >
-      <el-table-column prop="MCTG_CODE" label="コード" width="80" />
-      <el-table-column prop="MCTG_NAME" label="カテゴリ名" min-width="180" />
-      <el-table-column prop="MCTG_ORDER" label="表示順" width="100" align="center" />
-      <el-table-column prop="MCTG_VALID" label="有効" width="100" align="center">
+      <el-table-column prop="mctg_code" label="コード" width="80" />
+      <el-table-column prop="mctg_name" label="カテゴリ名" min-width="180" />
+      <el-table-column prop="mctg_order" label="表示順" width="100" align="center" />
+      <el-table-column prop="mctg_valid" label="有効" width="100" align="center">
         <template #default="{ row }">
           <el-tag :type="row.MCTG_VALID ? 'success' : 'info'" effect="plain">
             {{ row.MCTG_VALID ? '有効' : '無効' }}
@@ -39,17 +39,17 @@
     <!-- 新規追加ダイアログ -->
     <el-dialog v-model="addDialogVisible" title="カテゴリ新規追加" width="500px">
       <el-form :model="addForm" :rules="rules" ref="addFormRef" label-width="100px">
-        <el-form-item label="コード" prop="MCTG_CODE">
-           <el-input-number v-model="addForm.MCTG_CODE" :min="1" />
+        <el-form-item label="コード" prop="mcgt_code">
+           <el-input-number v-model="addForm.mctg_code" :min="1" />
         </el-form-item>
-        <el-form-item label="カテゴリ名" prop="MCTG_NAME">
-          <el-input v-model="addForm.MCTG_NAME" />
+        <el-form-item label="カテゴリ名" prop="mctg_name">
+          <el-input v-model="addForm.mctg_name" />
         </el-form-item>
-        <el-form-item label="表示順" prop="MCTG_ORDER">
-          <el-input-number v-model="addForm.MCTG_ORDER" :min="1" />
+        <el-form-item label="表示順" prop="mctg_order">
+          <el-input-number v-model="addForm.mctg_order" :min="1" />
         </el-form-item>
-        <el-form-item label="有効" prop="MCTG_VALID">
-          <el-switch v-model="addForm.MCTG_VALID" />
+        <el-form-item label="有効" prop="mctg_valid">
+          <el-switch v-model="addForm.mctg_valid" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -62,16 +62,16 @@
     <el-dialog v-model="editDialogVisible" title="カテゴリ編集" width="500px">
       <el-form :model="editForm" :rules="rules" ref="editFormRef" label-width="100px">
         <el-form-item label="コード">
-            <el-input-number v-model="editForm.MCTG_CODE" :min="1" disabled />
+            <el-input-number v-model="editForm.mctg_code" :min="1" disabled />
         </el-form-item>
         <el-form-item label="カテゴリ名">
-          <el-input v-model="editForm.MCTG_NAME" />
+          <el-input v-model="editForm.mctg_name" />
         </el-form-item>
         <el-form-item label="表示順">
-          <el-input-number v-model="editForm.MCTG_ORDER" :min="0" />
+          <el-input-number v-model="editForm.mctg_order" :min="0" />
         </el-form-item>
         <el-form-item label="有効">
-          <el-switch v-model="editForm.MCTG_VALID" />
+          <el-switch v-model="editForm.mctg_valid" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -99,16 +99,16 @@ import {
 import { ElMessageBox, ElMessage } from 'element-plus'
 
 // 共通化したバリデーションルールをインポート（自作の @/validators/commonRules から）
-import { required, positiveInteger } from '@/validators/commonRules'
+import { required, positiveInteger, maxLength } from '@/validators/commonRules'
 import { uniqueId } from '../validators/commonRules'
 
 // 新規追加 状態定義
 const addDialogVisible = ref(false)
 const addForm = ref({
-  MCTG_CODE: null, 
-  MCTG_NAME: '',
-  MCTG_ORDER: 1,
-  MCTG_VALID: true
+  mctg_code: null, 
+  mctg_name: '',
+  mctg_order: 1,
+  mctg_valid: true
 })
 const addFormRef = ref()
 
@@ -117,23 +117,19 @@ const existingIds = ref([])
 
 // バリデーションルールを定義（prop に応じたルール）
 const rules = reactive({
-  MCTG_CODE: [
+  mctg_code: [
+    required(),
     positiveInteger(),
-    {
-      validator: (_, value, callback) => {
-        const numeric = Number(value)
-        if (!Number.isInteger(numeric) || numeric <= 0) return callback()
-        if (existingIds.value.includes(numeric)) {
-          callback(new Error('このコードは既に使用されています'))
-        } else {
-          callback()
-        }
-      },
-      trigger: 'blur'
-    }
+    uniqueId(existingIds.value)
   ],
-  MCTG_NAME: [required()],
-  MCTG_ORDER: [positiveInteger()]
+  mctg_name: [
+    required(),
+    maxLength(20)
+  ],
+  mctg_order: [
+    required(),
+    positiveInteger()
+  ]
 })
 
 
@@ -149,7 +145,7 @@ const fetchCategories = async () => {
   try {
     const response = await getCategories()
     categories.value = response.data
-    existingIds.value = response.data.map(item => Number(item.MCTG_CODE))
+    existingIds.value = response.data.map(item => Number(item.mctg_code))
   } catch (error) {
     console.error('カテゴリ一覧の取得に失敗しました', error)
   }
@@ -159,16 +155,16 @@ const fetchCategories = async () => {
 const openAddDialog = () => {
   // 現在のID最大値を求める（空の場合は0）
   const maxId = categories.value.length > 0
-    ? Math.max(...categories.value.map(c => Number(c.MCTG_CODE) || 0))
+    ? Math.max(...categories.value.map(c => Number(c.mctg_code) || 0))
     : 0
   // 初期値を最大＋1。ただし、最低値は 1
   const nextId = Math.max(1, maxId + 1)
 
     addForm.value = {
-    MCTG_CODE: nextId,
-    MCTG_NAME: '',
-    MCTG_ORDER: 1,
-    MCTG_VALID: true
+    mctg_code: nextId,
+    mctg_name: '',
+    mctg_order: 1,
+    mctg_valid: true
   }
   addDialogVisible.value = true
 }
@@ -179,9 +175,9 @@ const submitAdd = async () => {
     await addFormRef.value.validate()
 
     // IDが空なら最大＋1に補完
-    if (!addForm.value.MCTG_CODE) {
-      const maxId = Math.max(0, ...categories.value.map(c => Number(c.MCTG_CODE)))
-      addForm.value.MCTG_CODE = maxId + 1
+    if (!addForm.value.mctg_code) {
+      const maxId = Math.max(0, ...categories.value.map(c => Number(c.mctg_code)))
+      addForm.value.mctg_code = maxId + 1
     }
 
     await createCategory(addForm.value)
@@ -191,7 +187,7 @@ const submitAdd = async () => {
   } catch (error) {
     console.error('エラー全体', error)
     // エラー内容に応じて分岐
-    const idErrors = error?.MCTG_CODE || error?.response?.data?.MCTG_CODE
+    const idErrors = error?.mctg_code || error?.response?.data?.mctg_code
     if (Array.isArray(idErrors) && idErrors.length > 0) {
       const msg = idErrors[0]?.message || String(idErrors[0])
       ElMessage.error(msg)
@@ -212,8 +208,8 @@ const submitEdit = async () => {
   try {
     await editFormRef.value.validate()
 
-    const { MCTG_CODE, ...payload } = editForm.value
-    await updateCategory(Number(editForm.value.MCTG_CODE), editForm.value)
+    const { mctg_code, ...payload } = editForm.value
+    await updateCategory(Number(editForm.value.mctg_code), editForm.value)
     editDialogVisible.value = false
     await fetchCategories()
   } catch (error) {
@@ -228,7 +224,7 @@ const submitEdit = async () => {
 // 削除処理：確認のうえ実行
 const confirmDelete = (row) => {
   ElMessageBox.confirm(
-    `「${row.MCTG_NAME}」を本当に削除しますか？`,
+    `「${row.mctg_name}」を本当に削除しますか？`,
     '確認',
     {
       confirmButtonText: '削除',
@@ -237,7 +233,7 @@ const confirmDelete = (row) => {
     }
   )
     .then(async () => {
-      await deleteCategory(row.MCTG_CODE)
+      await deleteCategory(row.mctg_code)
       await fetchCategories()
       ElMessage.success('削除しました')
     })
