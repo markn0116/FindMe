@@ -39,7 +39,7 @@
     <!-- 新規追加ダイアログ -->
     <el-dialog v-model="addDialogVisible" title="カテゴリ新規追加" width="500px">
       <el-form :model="addForm" :rules="rules" ref="addFormRef" label-width="100px">
-        <el-form-item label="コード" prop="mcgt_code">
+        <el-form-item label="コード" prop="mctg_code">
            <el-input-number v-model="addForm.mctg_code" :min="1" />
         </el-form-item>
         <el-form-item label="カテゴリ名" prop="mctg_name">
@@ -61,16 +61,16 @@
     <!-- 編集ダイアログ -->
     <el-dialog v-model="editDialogVisible" title="カテゴリ編集" width="500px">
       <el-form :model="editForm" :rules="rules" ref="editFormRef" label-width="100px">
-        <el-form-item label="コード">
+        <el-form-item label="コード" prop="mctg_code">
             <el-input-number v-model="editForm.mctg_code" :min="1" disabled />
         </el-form-item>
-        <el-form-item label="カテゴリ名">
+        <el-form-item label="カテゴリ名" prop="mctg_name">
           <el-input v-model="editForm.mctg_name" />
         </el-form-item>
-        <el-form-item label="表示順">
+        <el-form-item label="表示順" prop="mctg_order">
           <el-input-number v-model="editForm.mctg_order" :min="0" />
         </el-form-item>
-        <el-form-item label="有効">
+        <el-form-item label="有効" prop="mctg_valid">
           <el-switch v-model="editForm.mctg_valid" />
         </el-form-item>
       </el-form>
@@ -99,11 +99,11 @@ import {
 import { ElMessageBox, ElMessage } from 'element-plus'
 
 // 共通化したバリデーションルールをインポート（自作の @/validators/commonRules から）
-import { required, positiveInteger, maxLength } from '@/validators/commonRules'
-import { uniqueId } from '../validators/commonRules'
+import { required, positiveInteger, maxLength, uniqueId } from '@/validators/commonRules'
 
 // 新規追加 状態定義
 const addDialogVisible = ref(false)
+// 初期値
 const addForm = ref({
   mctg_code: null, 
   mctg_name: '',
@@ -136,10 +136,15 @@ const rules = reactive({
 // カテゴリ一覧を保持する状態変数
 const categories = ref([])
 
-// 編集用状態
+// 編集 状態定義
 const editDialogVisible = ref(false)
-const editForm = ref({})
-
+// 初期値
+const editForm = ref({
+  mctg_code: null,
+  mctg_name: '',
+  mctg_order: 1,
+  mctg_valid: true
+})
 // カテゴリ一覧取得
 const fetchCategories = async () => {
   try {
@@ -183,17 +188,40 @@ const submitAdd = async () => {
     await createCategory(addForm.value)
     ElMessage.success('カテゴリを追加しました')
     addDialogVisible.value = false
+    addFormRef.value.resetFields()
     await fetchCategories()
   } catch (error) {
-    console.error('エラー全体', error)
-    // エラー内容に応じて分岐
-    const idErrors = error?.mctg_code || error?.response?.data?.mctg_code
-    if (Array.isArray(idErrors) && idErrors.length > 0) {
-      const msg = idErrors[0]?.message || String(idErrors[0])
-      ElMessage.error(msg)
-    } else {
-      ElMessage.error('追加に失敗しました')
+    console.error('APIエラー', error)
+
+    // FastAPIなどからのレスポンスが object 形式か確認（バリデーションエラーを想定）
+    const apiErrors = error?.response?.data
+
+    if (apiErrors && typeof apiErrors === 'object') {
+      const messages: string[] = []
+
+      // 各フィールドごとにエラーメッセージを取り出して結合
+      for (const key in apiErrors) {
+        const fieldErrors = apiErrors[key]
+
+        // 複数エラー（配列）の場合
+        if (Array.isArray(fieldErrors)) {
+          messages.push(`${key}: ${fieldErrors.join(', ')}`)
+        }
+        // 単一メッセージの場合
+        else if (typeof fieldErrors === 'string') {
+          messages.push(`${key}: ${fieldErrors}`)
+        }
+      }
+
+      // 1つでもメッセージがあれば、結合して表示
+      if (messages.length > 0) {
+        ElMessage.error(messages.join(' / '))
+        return
+      }
     }
+
+    // 上記で処理できなければ、汎用エラーとして表示
+    ElMessage.error('登録に失敗しました（原因不明）')
   }
 }
 
@@ -210,14 +238,49 @@ const submitEdit = async () => {
 
     const { mctg_code, ...payload } = editForm.value
     await updateCategory(Number(editForm.value.mctg_code), editForm.value)
+    ElMessage.success('カテゴリを編集しました')
     editDialogVisible.value = false
+    editFormRef.value.resetFields()
     await fetchCategories()
   } catch (error) {
-    if (error.response) {
-      console.error('カテゴリ更新失敗: ', error.response.status, error.response.data)
-    } else {
-      console.error('カテゴリ更新失敗: ', error.message)
+    console.error('カテゴリ更新時のエラー', error)
+
+    // FastAPIのレスポンスデータを取得（バリデーションエラーやNotFoundを含む想定）
+    const apiErrors = error?.response?.data
+
+    // 1. 該当IDが存在しない（PUT対象が見つからない）などの明示的なエラーを最初に処理
+    if (apiErrors?.detail === 'Not Found') {
+      ElMessage.error('対象のカテゴリが見つかりませんでした')
+      return
     }
+
+    // 2. フィールドごとのバリデーションエラーがある場合に処理
+    if (apiErrors && typeof apiErrors === 'object') {
+      const messages: string[] = []
+
+      // 各フィールド（例：mctg_name, mctg_order）に対してメッセージを生成
+      for (const key in apiErrors) {
+        const fieldErrors = apiErrors[key]
+
+        // エラーが配列（複数メッセージ）の場合
+        if (Array.isArray(fieldErrors)) {
+          messages.push(`${key}: ${fieldErrors.join(', ')}`)
+        }
+        // 単一文字列で返ってくる場合
+        else if (typeof fieldErrors === 'string') {
+          messages.push(`${key}: ${fieldErrors}`)
+        }
+      }
+
+      // いずれかのエラーが存在していれば、まとめて表示
+      if (messages.length > 0) {
+        ElMessage.error(messages.join(' / '))
+        return
+      }
+    }
+
+    // 上記のどれにも該当しない場合の最終的なフォールバックエラーメッセージ
+    ElMessage.error('カテゴリ更新に失敗しました（原因不明）')
   }
 }
 
